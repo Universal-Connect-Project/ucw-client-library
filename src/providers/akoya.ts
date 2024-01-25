@@ -1,13 +1,11 @@
-import configuration from '../configuration';
 import AkoyaClient from '../serviceClients/akoyaClient';
 
 type Account = {
   accountId: string; 
 };
 
-const vcClient = new AkoyaClient(configuration.akoyaProd)
-
 export default async function GetVc(
+  vcClient: AkoyaClient,
   connection_id: string,
   type: string,
   userId: string

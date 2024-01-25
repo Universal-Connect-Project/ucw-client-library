@@ -1,31 +1,51 @@
 import CryptoJS from 'crypto-js';
 import * as crypto from 'crypto';
-import config from './config';
-import ProviderCredentials from './configuration';
+import {Config} from './config';
+import {getConfiguration} from './configuration';
 import axios from 'axios';
 
-import {AuthClient} from './serviceClients/authClient';
-import SophtronClient from './serviceClients/sophtronClient';
+import AkoyaClient from './serviceClients/akoyaClient';
+import FinicityClient from './serviceClients/finicityClient';
+import {MxVcClient} from './serviceClients/mxClient/vc';
+import SophtronVcClient from './serviceClients/sophtronClient/vc';
+
 import {GetSophtronVc} from './providers/sophtron';
-import {GetMxIntVc, GetMxProdVc} from './providers/mx';
+import GetMxVc from './providers/mx';
 import GetAkoyaVc from './providers/akoya';
 import GetFinicityVc from './providers/finicity';
 
-export function hmac(text: string, key: string) {
-    let hmac = CryptoJS.algo.HMAC.create(CryptoJS.algo.SHA256, CryptoJS.enc.Base64.parse(key));
-    hmac.update(text);
-    return CryptoJS.enc.Base64.stringify(hmac.finalize());
-}
-
 export function buildSophtronAuthCode(httpMethod: string, url: string, apiUserID: string, secret: string) {
-    let authPath = url.substring(url.lastIndexOf('/')).toLowerCase();
-    let text = httpMethod.toUpperCase() + '\n' + authPath;
-    let b64Sig = hmac(text, secret);
-    let authString = 'FIApiAUTH:' + apiUserID + ':' + b64Sig + ':' + authPath;
-    return authString;
+  let authPath = url.substring(url.lastIndexOf('/')).toLowerCase();
+  let text = httpMethod.toUpperCase() + '\n' + authPath;
+  let b64Sig = hmac(text, secret);
+  let authString = 'FIApiAUTH:' + apiUserID + ':' + b64Sig + ':' + authPath;
+  return authString;
 }
 
-function encrypt(text: string, keyHex: string, ivHex: string) {
+function hmac(text: string, key: string) {
+  let hmac = CryptoJS.algo.HMAC.create(CryptoJS.algo.SHA256, CryptoJS.enc.Base64.parse(key));
+  hmac.update(text);
+  return CryptoJS.enc.Base64.stringify(hmac.finalize());
+}
+
+export default class UCWClient {
+  config: Config;
+  akoyaClient: AkoyaClient;
+  finicityClient: FinicityClient;
+  mxClientInt: MxVcClient;
+  mxClientProd: MxVcClient;
+  sophtronClient: SophtronVcClient;
+
+  constructor(config: Config) {
+      this.config = config;
+      this.akoyaClient = new AkoyaClient(getConfiguration(config).akoyaProd, config);
+      this.finicityClient = new FinicityClient(getConfiguration(config).finicityProd, config);
+      this.mxClientInt = new MxVcClient(getConfiguration(config).mxInt);
+      this.mxClientProd = new MxVcClient(getConfiguration(config).mxProd);
+      this.sophtronClient = new SophtronVcClient(getConfiguration(config).sophtron);
+  }
+
+  encrypt(text: string, keyHex: string, ivHex: string) {
     if (!text) {
         return '';
     }
@@ -35,41 +55,43 @@ function encrypt(text: string, keyHex: string, ivHex: string) {
     let encrypted = cipher.update(text);
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     return encrypted.toString('hex');
-}
+  }
 
-async function post(path: string, data: any) {
-    const phrase = 'basic ' + Buffer.from(`${config.UcpClientId}:${config.UcpClientSecret}`).toString('base64');
-    const res = await axios.post(config.AuthServiceEndpoint + path, data, { headers: { Authorization: phrase } })
+  async post(path: string, data: any) {
+    const phrase = 'basic ' + Buffer.from(`${this.config.UcpClientId}:${this.config.UcpClientSecret}`).toString('base64');
+    const res = await axios.post(this.config.AuthServiceEndpoint + path, data, { headers: { Authorization: phrase } })
     return res.data;
-}
+  }
 
-function secretExchange(payload: any) {
-    return post(`/secretexchange`, { Payload: payload })
-}
+  secretExchange(payload: any) {
+    return this.post(`/secretexchange`, { Payload: payload })
+  }
 
-export async function getAuthCode() {
-    const key = Buffer.from(config.UcpEncryptionKey, 'base64').toString('hex');
+  async getAuthCode() {
+    const key = Buffer.from(this.config.UcpEncryptionKey, 'base64').toString('hex');
     const iv = crypto.randomBytes(16).toString('hex');
-    const payload = encrypt(JSON.stringify(ProviderCredentials), key, iv);
-    const token = await secretExchange(payload);
+    const ProviderCredentials = getConfiguration(this.config);
+    const payload = this.encrypt(JSON.stringify(ProviderCredentials), key, iv);
+    const token = await this.secretExchange(payload);
     const str = `ucp;${token.Token};${iv}`
     const b64 = Buffer.from(str).toString('base64')
     return b64;
-}
+  }
 
-export function getVc(provider: string, connectionId: string, type: string, userId: string, account_id: string, startTime?: string, endTime?: string){
-    console.info(`Getting vc from provider: ${provider}`)
+  getVc(provider: string, connectionId: string, type: string, userId: string, account_id: string, startTime?: string, endTime?: string){
+    console.info(`Getting vc from provider`, provider);
     switch(provider){
       case 'mx':
-        return GetMxProdVc(connectionId, type, userId, account_id);
+        return GetMxVc(this.mxClientProd, connectionId, type, userId, account_id);
       case 'mx-int':
       case 'mx_int':
-        return GetMxIntVc(connectionId, type, userId, account_id);
+        return GetMxVc(this.mxClientInt, connectionId, type, userId, account_id);
       case 'akoya':
-        return GetAkoyaVc(connectionId, type, userId);
+        return GetAkoyaVc(this.akoyaClient, connectionId, type, userId);
       case 'finicity':
-        return GetFinicityVc(connectionId, type, userId);
+        return GetFinicityVc(this.finicityClient, connectionId, type, userId);
       case 'sophtron':
-        return GetSophtronVc(connectionId, type, userId, account_id, startTime, endTime);
+        return GetSophtronVc(this.sophtronClient, connectionId, type, userId, account_id, startTime, endTime);
     }
   }
+}

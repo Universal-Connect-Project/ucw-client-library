@@ -1,42 +1,38 @@
+export type Config = {
+    LogLevel: 'debug' | 'trace' | 'info' | 'warning' | 'error',
+    Component: string,
+    Env: string,
 
-const config = {
-    LogLevel: 'debug',
-    Port: '8088',
-    Env: 'pre', // mocked
-    Version: '',
-    CryptoAlgorithm: 'aes-256-cbc',
+    HostUrl: string,
+    WebhookHostUrl: string,
 
-    HostUrl: `${process.env.HOST_URL}`,
-    WebhookHostUrl: `${process.env.WEBHOOK_HOST_URL}`,
+    AuthServiceEndpoint: string,
 
-    AuthServiceEndpoint: 'https://login.universalconnectproject.org/api',
+    SophtronApiServiceEndpoint: string,
+    SophtronVCServiceEndpoint: string,
 
-    SophtronApiServiceEndpoint: 'https://api.sophtron.com/api',
-    SophtronVCServiceEndpoint: 'https://vc.sophtron.com/api/',
+    UcpClientId: string,
+    UcpClientSecret: string,
+    UcpEncryptionKey: string,
 
-    UcpClientId: `${process.env.UCP_USERID}`,
-    UcpClientSecret: `${process.env.UCP_ACCESS_KEY}`,
-    UcpEncryptionKey: `${process.env.UCP_ENCRYPTION_KEY}`,
+    SophtronApiUserId: string,
+    SophtronApiUserSecret: string,
 
-    SophtronApiUserId: `${process.env.SOPHTRON_USERID}`,
-    SophtronApiUserSecret: `${process.env.SOPHTRON_ACCESS_KEY}`,
+    MxClientId: string,
+    MxApiSecret: string,
+    MxClientIdProd: string,
+    MxApiSecretProd: string,
 
-    MxClientId: `${process.env.MX_CLIENT_ID}`,
-    MxApiSecret: `${process.env.MX_API_KEY}`,
-    MxClientIdProd: '',
-    MxApiSecretProd: '',
+    AkoyaClientId: string,
+    AkoyaApiSecret: string,
+    AkoyaClientIdProd: string,
+    AkoyaApiSecretProd: string,
 
-    AkoyaClientId: '',
-    AkoyaApiSecret: '',
-    AkoyaClientIdProd: '',
-    AkoyaApiSecretProd: '',
+    FinicityPartnerId: string,
+    FinicityAppKey: string,
+    FinicitySecret: string,
+    FinicityPartnerIdProd: string,
+    FinicityAppKeyProd: string,
+    FinicitySecretProd: string,
+}
 
-    FinicityPartnerId: '',
-    FinicityAppKey: '',
-    FinicitySecret: '',
-    FinicityPartnerIdProd: '',
-    FinicityAppKeyProd: '',
-    FinicitySecretProd: '',
-};
-
-export default config;

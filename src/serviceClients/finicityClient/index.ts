@@ -1,4 +1,4 @@
-import config from '../../config';
+import {Config} from '../../config';
 import axios, { AxiosHeaderValue, AxiosInstance } from 'axios'
 
 type ApiConfig = {
@@ -22,9 +22,11 @@ function makeFinicityAuthHeaders(apiConfig: ApiConfig, tokenRes: { token: string
 export default class FinicityClient{
   apiConfig: ApiConfig;
   axios: AxiosInstance | undefined;
+  config: Config;
 
-  constructor(apiConfig: ApiConfig){
+  constructor(apiConfig: ApiConfig, config: Config){
     this.apiConfig = apiConfig
+    this.config = config;
   }
 
   getAuthToken(){
@@ -100,8 +102,8 @@ export default class FinicityClient{
       partnerId: this.apiConfig.partnerId,
       customerId: customerId,
       institutionId,
-      redirectUri: `${config.HostUrl}/oauth/${this.apiConfig.provider}/redirect_from?connection_id=${request_id}`,
-      webhook: `${config.WebhookHostUrl}/webhook/${this.apiConfig.provider}/?connection_id=${request_id}`,
+      redirectUri: `${this.config.HostUrl}/oauth/${this.apiConfig.provider}/redirect_from?connection_id=${request_id}`,
+      webhook: `${this.config.WebhookHostUrl}/webhook/${this.apiConfig.provider}/?connection_id=${request_id}`,
       webhookContentType: 'application/json',
       // 'singleUseUrl': true,
       // 'experience': 'default',

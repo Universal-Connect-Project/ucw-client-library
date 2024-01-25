@@ -1,4 +1,4 @@
-import config from '../../config';
+import {Config} from '../../config';
 import * as http from '../../infra/http';
 import CryptoJS from "crypto-js";
 
@@ -33,7 +33,7 @@ export default class AkoyaClient{
   client_redirect_url: string;
   authParams: { client_id: any; client_secret: any; };
 
-  constructor(apiConfig: ApiConfig){
+  constructor(apiConfig: ApiConfig, config: Config){
     this.apiConfig = apiConfig
     this.client_redirect_url = `${config.HostUrl}/oauth/${this.apiConfig.provider}/redirect_from`;
     this.authParams = {

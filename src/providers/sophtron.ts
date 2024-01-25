@@ -1,8 +1,7 @@
-import configuration from '../configuration'
 import SophtronVcClient from '../serviceClients/sophtronClient/vc';
 
-const vcClient = new SophtronVcClient(configuration.sophtron)
 export async function GetSophtronVc(
+  vcClient: SophtronVcClient,
   connection_id: string,
   type: string,
   userId: string,

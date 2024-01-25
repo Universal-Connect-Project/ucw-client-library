@@ -1,10 +1,8 @@
-import configuration from '../configuration';
-import FinicityClient from '../serviceClients/finicityClient';
 import { finicity as mapper } from '../adapters';
-
-const vcClient = new FinicityClient(configuration.finicityProd)
+import FinicityClient from '../serviceClients/finicityClient';
 
 export default async function GetVc(
+  vcClient: FinicityClient,
   connection_id: string,
   type: string,
   userId: string

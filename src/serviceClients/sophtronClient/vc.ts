@@ -1,18 +1,17 @@
 import * as http from '../../infra/http';
 import SophtronBaseClient from './base';
 import {buildSophtronAuthCode} from '../..'
-import ProviderCredentials from '../../configuration';
 import SophtronClient from './';
 
-const sophtronClient = new SophtronClient(ProviderCredentials.sophtron);
-
 export default class SophtronVcClient extends SophtronBaseClient{
+  sophtronClient: SophtronClient;
   constructor(apiConfig: any){
     super(apiConfig);
+    this.sophtronClient = new SophtronClient(apiConfig);
   }
 
   async getVC(path: string) {
-    const res = await sophtronClient.getUserIntegrationKey();
+    const res = await this.sophtronClient.getUserIntegrationKey();
     const headers = { 
       IntegrationKey: res.IntegrationKey,
       Authorization: buildSophtronAuthCode('get', path, this.apiConfig.clientId, this.apiConfig.secret)
